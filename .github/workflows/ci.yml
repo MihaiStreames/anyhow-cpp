@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "**.hpp"
+      - "**.cpp"
+      - "**/CMakeLists.txt"
+      - "cmake/**"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Format check
+        if: matrix.os == 'ubuntu-latest'
+        run: find src tests -name '*.hpp' -o -name '*.cpp' | xargs clang-format --dry-run --Werror
+
+      - name: Configure
+        env:
+          CXX_STD: "20"
+        shell: bash
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DANYHOW_BUILD_TESTS=ON "-DCMAKE_CXX_STANDARD=$CXX_STD"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure

@@ -1,0 +1,54 @@
+fail_fast: true
+
+repos:
+  - repo: builtin
+    hooks:
+      - id: trailing-whitespace
+        priority: 0
+      - id: end-of-file-fixer
+        priority: 0
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        priority: 0
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.25.2
+    hooks:
+      - id: zizmor
+        priority: 0
+
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
+    hooks:
+      - id: prettier
+        types_or: [json, yaml]
+        priority: 2
+
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        priority: 1
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        priority: 2
+
+  - repo: local
+    hooks:
+      - id: clang-format
+        name: clang-format
+        entry: clang-format --dry-run --Werror
+        language: system
+        types_or: [c, c++]
+        priority: 1
+
+      # skip for now
+      # - id: clang-tidy
+      #   name: clang-tidy
+      #   entry: clang-tidy --use-color -p build
+      #   language: system
+      #   types: [c++]
+      #   priority: 0

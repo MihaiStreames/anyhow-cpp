@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  VERSION: ${{ github.ref_name }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create GitHub release and upload assets
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Pack source archive
+        run: |
+          git archive --prefix="anyhow-cpp-${VERSION}/" -o "anyhow-cpp-${VERSION}.tar.gz" HEAD
+          git archive --prefix="anyhow-cpp-${VERSION}/" -o "anyhow-cpp-${VERSION}.zip" HEAD
+
+      - name: Generate checksums
+        run: bash .github/workflows/scripts/checksum.sh "anyhow-cpp-${VERSION}.tar.gz" "anyhow-cpp-${VERSION}.zip"
+
+      - name: Extract release notes
+        run: bash .github/workflows/scripts/extract-changelog.sh "$VERSION" CHANGELOG.md > release_notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$VERSION" --notes-file release_notes.md \
+            "anyhow-cpp-${VERSION}.tar.gz" \
+            "anyhow-cpp-${VERSION}.tar.gz.sha256" \
+            "anyhow-cpp-${VERSION}.zip" \
+            "anyhow-cpp-${VERSION}.zip.sha256"

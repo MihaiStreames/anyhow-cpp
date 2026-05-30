@@ -1,0 +1,51 @@
+### Build directories ###
+build/
+out/
+cmake-build-*/
+
+### CMake generated ###
+.cache/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+_deps/
+install_manifest.txt
+compile_commands.json
+
+### Compiled artifacts ###
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.slo
+*.lo
+*.lai
+*.la
+
+### Precompiled headers ###
+*.gch
+*.pch
+
+### Dependencies ###
+*.d
+
+### Fuzz ###
+fuzz/corpus/
+fuzz/artifacts/
+fuzz-*/
+crash-*
+leak-*
+timeout-*
+
+### LLMs ###
+.claude/
+
+### Misc ###
+insp/

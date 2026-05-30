@@ -1,0 +1,21 @@
+Checks: >
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  readability-*,
+  -readability-magic-numbers,
+  performance-*,
+  bugprone-*,
+  clang-analyzer-*
+
+WarningsAsErrors: "*"
+
+HeaderFilterRegex: "src/.*"
+
+CheckOptions:
+  - key: readability-identifier-length.MinimumVariableNameLength
+    value: "2"
+  - key: readability-identifier-length.MinimumParameterNameLength
+    value: "2"

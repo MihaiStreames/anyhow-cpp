@@ -5,14 +5,7 @@ Header-only C++20 result type with propagating stacktraced errors, inspired by R
 [![License](https://img.shields.io/github/license/MihaiStreames/anyhow-cpp?label=license)](LICENSE)
 
 ```cpp
-anyhow::Expected<Config> load(std::string_view path) {
-    if (path.empty()) return anyhow::fail("path is empty", "io");
-
-    std::string text;
-    ANYHOW_TRY_ASSIGN(text, read_file(path));
-
-    return parse(text);
-}
+#include <anyhow.hpp>
 ```
 
 ## Install
@@ -56,15 +49,14 @@ Include everything at once with `anyhow.hpp`, or pull in individual headers as n
 
 Define `ANYHOW_SHORT_MACROS` before including `macros.hpp` to enable the short aliases `TRY`, `TRY_ASSIGN`, `TRY_CATCH`.
 
-```cpp
-#include <anyhow.hpp>
-```
-
 Use `Expected<T>` as the return type of any fallible function. Return `anyhow::fail(message, domain)` on failure, or wrap a value in `Expected<T>{value}` on success.
 
 ```cpp
 anyhow::Expected<int> parse(std::string_view s) {
-    if (s.empty()) return anyhow::fail("empty input", "parse");
+    if (s.empty()) {
+        return anyhow::fail("empty input", "parse");
+    }
+
     return 42;
 }
 ```
@@ -76,8 +68,10 @@ Use `ANYHOW_TRY_ASSIGN` to unwrap a value or propagate the failure up. Each macr
 ```cpp
 anyhow::Expected<std::string> process(std::string_view s) {
     int n = 0;
-    ANYHOW_TRY_ASSIGN(n, parse(s));
-    ANYHOW_TRY(validate(n));
+
+    TRY_ASSIGN(n, parse(s));
+    TRY(validate(n));
+
     return std::to_string(n);
 }
 ```
@@ -87,8 +81,10 @@ auto r = process("");
 if (r.failed()) {
     auto& f = r.failure();
     std::println("error [{}]: {}", f.domain(), f.message());
-    for (size_t i = 0; i < f.count; i++)
+
+    for (size_t i = 0; i < f.count; i++) {
         std::println("  at {} ({}:{})", f.frames[i].function, f.frames[i].file, f.frames[i].line);
+    }
 }
 ```
 

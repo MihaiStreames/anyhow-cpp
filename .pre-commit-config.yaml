@@ -45,10 +45,9 @@ repos:
         types_or: [c, c++]
         priority: 1
 
-      # skip for now
-      # - id: clang-tidy
-      #   name: clang-tidy
-      #   entry: clang-tidy --use-color -p build
-      #   language: system
-      #   types: [c++]
-      #   priority: 0
+      - id: clang-tidy
+        name: clang-tidy
+        entry: clang-tidy --use-color -p build
+        language: system
+        files: \.cpp$
+        priority: 0

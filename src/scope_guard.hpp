@@ -5,26 +5,33 @@
 
 namespace anyhow {
 
-template <typename Fn> struct ScopeGuard {
+template<typename Fn>
+struct ScopeGuard {
     std::decay_t<Fn> fn;
-    bool             active = true;
+    bool active = true;
 
-    explicit ScopeGuard(Fn f) : fn(std::move(f)) {}
+    explicit ScopeGuard(Fn fn) : fn(std::move(fn)) {}
 
     ScopeGuard(ScopeGuard&& other) noexcept : fn(std::move(other.fn)), active(other.active) {
         other.active = false;
     }
 
-    ScopeGuard(const ScopeGuard&)            = delete;
+    ScopeGuard(const ScopeGuard&) = delete;
     ScopeGuard& operator=(const ScopeGuard&) = delete;
+    ScopeGuard& operator=(ScopeGuard&&) = delete;
 
     ~ScopeGuard() noexcept {
-        if (active) fn();
+        if (active) {
+            fn();
+        }
     }
 
-    void release() noexcept { active = false; }
+    void release() noexcept {
+        active = false;
+    }
 };
 
-template <typename Fn> ScopeGuard(Fn) -> ScopeGuard<Fn>;
+template<typename Fn>
+ScopeGuard(Fn) -> ScopeGuard<Fn>;
 
 } // namespace anyhow

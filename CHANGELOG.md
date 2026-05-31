@@ -2,6 +2,13 @@
 
 All notable changes to anyhow-cpp.
 
+## [0.1.1] - 2026-06-01
+
+### Fixed
+
+- `ScopeGuard` move-assign (`operator=(ScopeGuard&&)`) deleted to prevent accidental reassignment
+- `i++` to `++i` in `Failure::push` ring-buffer loop
+
 ## [0.1.0] - 2026-05-31
 
 ### Added

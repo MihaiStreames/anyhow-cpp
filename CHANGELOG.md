@@ -4,6 +4,14 @@ All notable changes to anyhow-cpp.
 
 ## [0.1.1] - 2026-06-01
 
+### Added
+
+- Doc-comments on public types, members, and macros
+
+### Changed
+
+- Dropped redundant `[[nodiscard]]` from `map`, `and_then`, `fail` (return type already carries it)
+
 ### Fixed
 
 - `ScopeGuard` move-assign (`operator=(ScopeGuard&&)`) deleted to prevent accidental reassignment

@@ -1,5 +1,6 @@
 #pragma once
 
+/// Evaluate `expr`; on failure, push the current frame and return the failure.
 #define ANYHOW_TRY(expr)                                                                           \
     do {                                                                                           \
         auto _r_ = (expr);                                                                         \
@@ -10,6 +11,7 @@
         }                                                                                          \
     } while (0)
 
+/// Like `ANYHOW_TRY`, but run `cleanup` before returning on failure.
 #define ANYHOW_TRY_CATCH(expr, cleanup)                                                            \
     do {                                                                                           \
         auto _r_ = (expr);                                                                         \
@@ -21,7 +23,8 @@
         }                                                                                          \
     } while (0)
 
-#define ANYHOW_TRY_ASSIGN(varOut, expr)                                                            \
+/// Evaluate `expr`; on success assign the value to `var_out`, else return the failure.
+#define ANYHOW_TRY_ASSIGN(var_out, expr)                                                           \
     do {                                                                                           \
         auto _r_ = (expr);                                                                         \
         if (!_r_) {                                                                                \
@@ -29,13 +32,11 @@
                 std::move(_r_.failure()).push(::anyhow::Frame::current())                          \
             };                                                                                     \
         }                                                                                          \
-        (varOut) = std::move(_r_.value());                                                         \
+        (var_out) = std::move(_r_.value());                                                        \
     } while (0)
 
-// Opt-in short aliases
-//
-// Define ANYHOW_SHORT_MACROS before including to enable
-//
+// opt-in short aliases
+// define ANYHOW_SHORT_MACROS before including to enable
 // FAIL omitted (GTest defines FAIL() and conflicts)
 
 #ifdef ANYHOW_SHORT_MACROS

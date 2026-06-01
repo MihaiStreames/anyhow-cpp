@@ -5,6 +5,7 @@
 
 namespace anyhow {
 
+/// Runs a callable on scope exit unless `release()` is called first.
 template<typename Fn>
 struct ScopeGuard {
     std::decay_t<Fn> fn;
@@ -26,6 +27,7 @@ struct ScopeGuard {
         }
     }
 
+    /// Cancel the guard so the callable does not run.
     void release() noexcept {
         active = false;
     }

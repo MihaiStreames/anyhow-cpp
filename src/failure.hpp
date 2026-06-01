@@ -16,6 +16,10 @@
 
 namespace anyhow {
 
+/// An error plus the frame trace it accumulated while propagating.
+///
+/// `frames` is a ring buffer of depth `ANYHOW_MAX_FRAMES` (default 16); once full,
+/// the oldest frame is evicted on each `push`.
 struct [[nodiscard]] Failure {
     static constexpr std::size_t MAX_FRAMES = ANYHOW_MAX_FRAMES;
 
@@ -34,6 +38,7 @@ struct [[nodiscard]] Failure {
     Failure(Failure&&) = default;
     Failure& operator=(Failure&&) = default;
 
+    /// Append a frame to the trace, evicting the oldest if the buffer is full.
     Failure&& push(Frame frame) && {
         if (count < MAX_FRAMES) {
             frames[count++] = frame;
@@ -55,13 +60,16 @@ struct [[nodiscard]] Failure {
     }
 };
 
+/// Wraps a `Failure` for return. Forces explicit error construction, preventing
+/// implicit conversion of a bare value into an errored `Expected<T>`.
 struct [[nodiscard]] Unexpected {
     Failure failure;
 
     explicit Unexpected(Failure fail) : failure(std::move(fail)) {}
 };
 
-[[nodiscard]] inline Unexpected fail(
+/// Construct a failure with `message` and optional `domain`, capturing the call site.
+inline Unexpected fail(
     std::string message,
     std::string domain = {},
     const std::source_location loc = std::source_location::current()

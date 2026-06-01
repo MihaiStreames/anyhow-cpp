@@ -10,6 +10,10 @@
 
 namespace anyhow {
 
+/// Result type for fallible functions: holds either a `T` or a `Failure`.
+///
+/// Construct from a value on success, or from `anyhow::fail(...)` / `Unexpected`
+/// on failure. Check with `failed()` or `operator bool` before accessing `value()`.
 template<typename T>
 class [[nodiscard]] Expected {
     static_assert(!std::is_reference_v<T>);
@@ -66,8 +70,9 @@ class [[nodiscard]] Expected {
         return std::get<Failure>(_data);
     }
 
+    /// Transform the contained value, or pass the failure through untouched.
     template<typename Fn>
-    [[nodiscard]] auto map(Fn&& fn) && -> Expected<std::invoke_result_t<Fn, T>> {
+    auto map(Fn&& fn) && -> Expected<std::invoke_result_t<Fn, T>> {
         using U = std::invoke_result_t<Fn, T>;
         if (failed()) {
             return Unexpected {std::move(failure())};
@@ -75,14 +80,16 @@ class [[nodiscard]] Expected {
         return Expected<U> {std::forward<Fn>(fn)(std::move(value()))};
     }
 
+    /// Chain a fallible operation; the function itself returns an `Expected`.
     template<typename Fn>
-    [[nodiscard]] auto and_then(Fn&& fn) && -> std::invoke_result_t<Fn, T> {
+    auto and_then(Fn&& fn) && -> std::invoke_result_t<Fn, T> {
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
         return std::forward<Fn>(fn)(std::move(value()));
     }
 
+    /// Return the contained value, or `fallback` if this holds a failure.
     [[nodiscard]] T value_or(T fallback) && {
         if (failed()) {
             return std::move(fallback);
@@ -94,6 +101,7 @@ class [[nodiscard]] Expected {
     std::variant<T, Failure> _data;
 };
 
+/// Specialization for fallible functions that yield no value on success.
 template<>
 class [[nodiscard]] Expected<void> {
   public:
@@ -119,8 +127,9 @@ class [[nodiscard]] Expected<void> {
         return *_failure;
     }
 
+    /// Chain a fallible operation; the function itself returns an `Expected`.
     template<typename Fn>
-    [[nodiscard]] auto and_then(Fn&& fn) && -> std::invoke_result_t<Fn> {
+    auto and_then(Fn&& fn) && -> std::invoke_result_t<Fn> {
         if (failed()) {
             return Unexpected {std::move(failure())};
         }

@@ -28,7 +28,7 @@ TEST(Context, SingleLayer) {
 
     EXPECT_EQ(res.failure().context.size(), 1U);
     EXPECT_EQ(res.failure().context[0], "failed to load config");
-    EXPECT_EQ(res.failure().message(), "no such file or directory");
+    EXPECT_EQ(res.failure().error.message, "no such file or directory");
 }
 
 TEST(Context, TwoLayers) {

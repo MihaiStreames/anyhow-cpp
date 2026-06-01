@@ -18,6 +18,8 @@ All notable changes to this project.
 - Dropped redundant `[[nodiscard]]` from `map`, `and_then`, `fail` (return type already carries it)
 - `Error` renamed to `ErrorInfo`, freeing `Error` for the future type-erased error type (Phase 5)
 - Member ordering standardized across all headers: constants -> fields -> constructors -> mutators -> accessors -> methods
+- `Expected<T>` value constructors are now implicit, so `return value;` works directly from a fallible function (the error path stays explicit through `Unexpected`)
+- Removed `Failure::message()` / `Failure::domain()` accessors; read `failure().error.message` / `failure().error.domain` directly (`Failure` is a transparent struct)
 
 ### Fixed
 

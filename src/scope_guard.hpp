@@ -8,13 +8,10 @@ namespace anyhow {
 /// Runs a callable on scope exit unless `release()` is called first.
 template<typename Fn>
 struct ScopeGuard {
-    std::decay_t<Fn> fn;
-    bool active = true;
+    explicit ScopeGuard(Fn func) : _fn(std::move(func)) {}
 
-    explicit ScopeGuard(Fn func) : fn(std::move(func)) {}
-
-    ScopeGuard(ScopeGuard&& other) noexcept : fn(std::move(other.fn)), active(other.active) {
-        other.active = false;
+    ScopeGuard(ScopeGuard&& other) noexcept : _fn(std::move(other._fn)), _active(other._active) {
+        other._active = false;
     }
 
     ScopeGuard(const ScopeGuard&) = delete;
@@ -22,15 +19,19 @@ struct ScopeGuard {
     ScopeGuard& operator=(ScopeGuard&&) = delete;
 
     ~ScopeGuard() noexcept {
-        if (active) {
-            fn();
+        if (_active) {
+            _fn();
         }
     }
 
     /// Cancel the guard so the callable does not run.
     void release() noexcept {
-        active = false;
+        _active = false;
     }
+
+  private:
+    std::decay_t<Fn> _fn;
+    bool _active = true;
 };
 
 template<typename Fn>

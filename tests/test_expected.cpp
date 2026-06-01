@@ -16,8 +16,8 @@ TEST(Expected, FailureHoldsError) {
 
     EXPECT_TRUE(res.failed());
     EXPECT_FALSE(bool(res));
-    EXPECT_EQ(res.failure().message(), "something went wrong");
-    EXPECT_EQ(res.failure().domain(), "io");
+    EXPECT_EQ(res.failure().error.message, "something went wrong");
+    EXPECT_EQ(res.failure().error.domain, "io");
 }
 
 TEST(Expected, ArrowOperator) {
@@ -40,13 +40,12 @@ TEST(Expected, MapFailurePassthrough) {
     auto res = std::move(err_int("bad")).map([](int val) { return val * 2; });
 
     EXPECT_TRUE(res.failed());
-    EXPECT_EQ(res.failure().message(), "bad");
+    EXPECT_EQ(res.failure().error.message, "bad");
 }
 
 TEST(Expected, AndThenSuccess) {
-    auto res = std::move(ok_int(3)).and_then([](int val) -> anyhow::Expected<int> {
-        return anyhow::Expected<int>(val + 1);
-    });
+    auto res =
+        std::move(ok_int(3)).and_then([](int val) -> anyhow::Expected<int> { return {val + 1}; });
 
     EXPECT_FALSE(res.failed());
     EXPECT_EQ(res.value(), 4);
@@ -54,11 +53,11 @@ TEST(Expected, AndThenSuccess) {
 
 TEST(Expected, AndThenFailurePassthrough) {
     auto res = std::move(err_int("bad")).and_then([](int val) -> anyhow::Expected<int> {
-        return anyhow::Expected<int>(val + 1);
+        return {val + 1};
     });
 
     EXPECT_TRUE(res.failed());
-    EXPECT_EQ(res.failure().message(), "bad");
+    EXPECT_EQ(res.failure().error.message, "bad");
 }
 
 TEST(Expected, ValueOrSuccess) {
@@ -80,7 +79,7 @@ TEST(ExpectedVoid, FailureHoldsError) {
     auto res = err_void("oops");
 
     EXPECT_TRUE(res.failed());
-    EXPECT_EQ(res.failure().message(), "oops");
+    EXPECT_EQ(res.failure().error.message, "oops");
 }
 
 TEST(ExpectedVoid, AndThenSuccess) {

@@ -8,36 +8,36 @@ static anyhow::Expected<int> inner() {
 
 static anyhow::Expected<int> try_propagate() {
     ANYHOW_TRY(inner());
-    return anyhow::Expected<int>(0);
+    return {0};
 }
 
 static anyhow::Expected<int> try_assign_ok() {
     int val = 0;
     ANYHOW_TRY_ASSIGN(val, ok_int(42));
-    return anyhow::Expected<int>(val);
+    return {val};
 }
 
 static anyhow::Expected<int> try_assign_fail() {
     int val = 0;
     ANYHOW_TRY_ASSIGN(val, err_int("assign failed"));
-    return anyhow::Expected<int>(val);
+    return {val};
 }
 
 static anyhow::Expected<int> try_catch_fail(bool& cleaned) {
     ANYHOW_TRY_CATCH(inner(), cleaned = true);
-    return anyhow::Expected<int>(0);
+    return {0};
 }
 
 static anyhow::Expected<int> try_catch_ok(bool& cleaned) {
     ANYHOW_TRY_CATCH(ok_int(1), cleaned = true);
-    return anyhow::Expected<int>(0);
+    return {0};
 }
 
 TEST(Macros, TryPropagatesFailure) {
     auto res = try_propagate();
 
     ASSERT_TRUE(res.failed());
-    EXPECT_EQ(res.failure().message(), "inner error");
+    EXPECT_EQ(res.failure().error.message, "inner error");
 }
 
 TEST(Macros, TryAssignExtractsValue) {
@@ -51,7 +51,7 @@ TEST(Macros, TryAssignPropagatesFailure) {
     auto res = try_assign_fail();
 
     ASSERT_TRUE(res.failed());
-    EXPECT_EQ(res.failure().message(), "assign failed");
+    EXPECT_EQ(res.failure().error.message, "assign failed");
 }
 
 TEST(Macros, TryCatchRunsCleanupOnFailure) {

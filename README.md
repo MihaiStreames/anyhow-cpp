@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
   anyhow-cpp
   GIT_REPOSITORY https://github.com/MihaiStreames/anyhow-cpp.git
-  GIT_TAG        v0.1.0
+  GIT_TAG        v0.1.1
 )
 FetchContent_MakeAvailable(anyhow-cpp)
 
@@ -50,9 +50,10 @@ Include everything at once with `anyhow.hpp`, or pull in individual headers as n
 | `macros.hpp`      | `ANYHOW_TRY`, `ANYHOW_TRY_ASSIGN`, `ANYHOW_TRY_CATCH` |
 | `scope_guard.hpp` | `ScopeGuard`                                          |
 
-Define `ANYHOW_SHORT_MACROS` before including `macros.hpp` to enable the short aliases `TRY`, `TRY_ASSIGN`, `TRY_CATCH`.
+> [!NOTE]
+> Define `ANYHOW_SHORT_MACROS` before including `macros.hpp` to enable the short aliases `TRY`, `TRY_ASSIGN`, `TRY_CATCH`.
 
-Use `Expected<T>` as the return type of any fallible function. Return `anyhow::fail(message, domain)` on failure, or wrap a value in `Expected<T>{value}` on success.
+Use `Expected<T>` as the return type of any fallible function. Return `anyhow::fail(message, domain)` on failure, or return the value directly on success.
 
 ```cpp
 anyhow::Expected<int> parse(std::string_view s) {
@@ -72,8 +73,8 @@ Use `ANYHOW_TRY_ASSIGN` to unwrap a value or propagate the failure up. Each macr
 anyhow::Expected<std::string> process(std::string_view s) {
     int n = 0;
 
-    TRY_ASSIGN(n, parse(s));
-    TRY(validate(n));
+    ANYHOW_TRY_ASSIGN(n, parse(s));
+    ANYHOW_TRY(validate(n));
 
     return std::to_string(n);
 }
@@ -83,19 +84,38 @@ anyhow::Expected<std::string> process(std::string_view s) {
 auto r = process("");
 if (r.failed()) {
     auto& f = r.failure();
-    std::println("error [{}]: {}", f.domain(), f.message());
+    std::cout << "error [" << f.error.domain << "]: " << f.error.message << '\n';
 
     for (size_t i = 0; i < f.count; i++) {
-        std::println("  at {} ({}:{})", f.frames[i].function, f.frames[i].file, f.frames[i].line);
+        std::cout << "  at " << f.frames[i].function << " (" << f.frames[i].file << ':' << f.frames[i].line << ")\n";
     }
 }
 ```
 
 ```console
 error [parse]: empty input
-  at parse(std::string_view) (src/main.cpp:12)
-  at process(std::string_view) (src/main.cpp:19)
-  at main() (src/main.cpp:34)
+  at anyhow::Expected<int> parse(std::string_view) (src/main.cpp:8)
+  at anyhow::Expected<std::string> process(std::string_view) (src/main.cpp:17)
+```
+
+### Context
+
+Wrap failures with human-readable context as they propagate up the call stack. `context` takes a string eagerly; `with_context` takes a callable and only evaluates it on failure.
+
+```cpp
+anyhow::Expected<Config> load(std::string_view path) {
+    return parse_file(path)
+        .context("failed to parse config")
+        .with_context([&] { return "loading config from " + std::string(path); });
+}
+```
+
+On failure, `Failure::fmt()` renders context outermost-first followed by the root error:
+
+```console
+loading config from /etc/app/config.toml
+failed to parse config
+unexpected token at line 42 [parse]
 ```
 
 ### Chaining
@@ -123,22 +143,9 @@ Override the frame buffer depth at compile time (default: `16`). When full, olde
 #include <anyhow.hpp>
 ```
 
-## vs Rust's anyhow
+## vs `anyhow`
 
-| Feature                                   | Status                                   |
-| ----------------------------------------- | ---------------------------------------- |
-| `Expected<T>` / `Expected<void>`          | Done                                     |
-| `fail(msg, domain)`                       | Done                                     |
-| `ANYHOW_TRY*` propagation macros          | Done                                     |
-| `map` / `and_then` / `value_or`           | Done                                     |
-| `ScopeGuard`                              | Done                                     |
-| `context(msg)` -- wrap with message layer | Done                                     |
-| `with_context(fn)` -- lazy context        | Done                                     |
-| `chain()` -- iterate context layers       | WIP                                      |
-| `root_cause()` -- deepest error           | WIP                                      |
-| `bail!` / `ensure!` macros                | WIP                                      |
-| `Result<T>` type alias                    | WIP                                      |
-| Downcasting (`is<E>`, `downcast<E>`)      | No `std::error::Error` equivalent in C++ |
+See [docs/vs-rust.md](docs/vs-rust.md) for a feature-by-feature comparison with side-by-side Rust and C++ examples.
 
 ## Acknowledgments
 

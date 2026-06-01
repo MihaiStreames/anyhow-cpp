@@ -20,9 +20,9 @@ class [[nodiscard]] Expected {
     static_assert(!std::is_void_v<T>);
 
   public:
-    explicit Expected(const T& value) : _data(value) {}
+    Expected(const T& value) : _data(value) {}
 
-    explicit Expected(T&& value) noexcept : _data(std::move(value)) {}
+    Expected(T&& value) noexcept : _data(std::move(value)) {}
 
     Expected(Unexpected ux) : _data(std::move(ux.failure)) {}
 

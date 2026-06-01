@@ -6,7 +6,6 @@
 #include <ranges>
 #include <source_location>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -60,14 +59,6 @@ struct [[nodiscard]] Failure {
     Failure&& push_context(std::string msg) && {
         context.push_back(std::move(msg));
         return std::move(*this);
-    }
-
-    [[nodiscard]] std::string_view message() const noexcept {
-        return error.message;
-    }
-
-    [[nodiscard]] std::string_view domain() const noexcept {
-        return error.domain;
     }
 
     /// Render the failure as a human-readable string.

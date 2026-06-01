@@ -2,10 +2,13 @@
 
 #include <array>
 #include <cstdint>
+#include <ostream>
+#include <ranges>
 #include <source_location>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "error.hpp"
 #include "frame.hpp"
@@ -23,13 +26,14 @@ namespace anyhow {
 struct [[nodiscard]] Failure {
     static constexpr std::size_t MAX_FRAMES = ANYHOW_MAX_FRAMES;
 
-    Error error;
+    ErrorInfo error;
+    std::vector<std::string> context;
     std::array<Frame, MAX_FRAMES> frames {};
     uint8_t count = 0;
 
     Failure() = default;
 
-    Failure(Error err, Frame frame) : error(std::move(err)) {
+    Failure(ErrorInfo err, Frame frame) : error(std::move(err)) {
         frames[count++] = frame;
     }
 
@@ -48,6 +52,13 @@ struct [[nodiscard]] Failure {
             }
             frames[MAX_FRAMES - 1] = frame;
         }
+
+        return std::move(*this);
+    }
+
+    /// Push a wrapping context message (outermost pushed last).
+    Failure&& push_context(std::string msg) && {
+        context.push_back(std::move(msg));
         return std::move(*this);
     }
 
@@ -58,14 +69,40 @@ struct [[nodiscard]] Failure {
     [[nodiscard]] std::string_view domain() const noexcept {
         return error.domain;
     }
+
+    /// Render the failure as a human-readable string.
+    ///
+    /// Context layers are printed outermost-first, followed by the root error.
+    [[nodiscard]] std::string fmt() const {
+        std::string out;
+
+        for (const auto& layer : std::views::reverse(context)) {
+            out += layer;
+            out += '\n';
+        }
+
+        out += error.message;
+
+        if (!error.domain.empty()) {
+            out += " [";
+            out += error.domain;
+            out += ']';
+        }
+
+        return out;
+    }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Failure& failure) {
+    return os << failure.fmt();
+}
 
 /// Wraps a `Failure` for return. Forces explicit error construction, preventing
 /// implicit conversion of a bare value into an errored `Expected<T>`.
 struct [[nodiscard]] Unexpected {
     Failure failure;
 
-    explicit Unexpected(Failure fail) : failure(std::move(fail)) {}
+    explicit Unexpected(Failure payload) : failure(std::move(payload)) {}
 };
 
 /// Construct a failure with `message` and optional `domain`, capturing the call site.
@@ -75,7 +112,7 @@ inline Unexpected fail(
     const std::source_location loc = std::source_location::current()
 ) {
     return Unexpected {Failure {
-        Error {.message = std::move(message), .domain = std::move(domain)},
+        ErrorInfo {.message = std::move(message), .domain = std::move(domain)},
         Frame::current(loc)
     }};
 }

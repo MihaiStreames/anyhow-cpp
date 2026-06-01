@@ -11,7 +11,7 @@ struct ScopeGuard {
     std::decay_t<Fn> fn;
     bool active = true;
 
-    explicit ScopeGuard(Fn fn) : fn(std::move(fn)) {}
+    explicit ScopeGuard(Fn func) : fn(std::move(func)) {}
 
     ScopeGuard(ScopeGuard&& other) noexcept : fn(std::move(other.fn)), active(other.active) {
         other.active = false;

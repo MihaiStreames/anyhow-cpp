@@ -26,22 +26,8 @@ class [[nodiscard]] Expected {
 
     Expected(Unexpected ux) : _data(std::move(ux.failure)) {}
 
-    [[nodiscard]] bool failed() const noexcept {
-        return !std::holds_alternative<T>(_data);
-    }
-
     explicit operator bool() const noexcept {
         return !failed();
-    }
-
-    [[nodiscard]] T& value() noexcept {
-        assert(!failed());
-        return std::get<T>(_data);
-    }
-
-    [[nodiscard]] const T& value() const noexcept {
-        assert(!failed());
-        return std::get<T>(_data);
     }
 
     [[nodiscard]] T& operator*() noexcept {
@@ -60,6 +46,20 @@ class [[nodiscard]] Expected {
         return &value();
     }
 
+    [[nodiscard]] bool failed() const noexcept {
+        return !std::holds_alternative<T>(_data);
+    }
+
+    [[nodiscard]] T& value() noexcept {
+        assert(!failed());
+        return std::get<T>(_data);
+    }
+
+    [[nodiscard]] const T& value() const noexcept {
+        assert(!failed());
+        return std::get<T>(_data);
+    }
+
     [[nodiscard]] Failure& failure() noexcept {
         assert(failed());
         return std::get<Failure>(_data);
@@ -72,21 +72,21 @@ class [[nodiscard]] Expected {
 
     /// Transform the contained value, or pass the failure through untouched.
     template<typename Fn>
-    auto map(Fn&& fn) && -> Expected<std::invoke_result_t<Fn, T>> {
+    auto map(Fn&& func) && -> Expected<std::invoke_result_t<Fn, T>> {
         using U = std::invoke_result_t<Fn, T>;
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
-        return Expected<U> {std::forward<Fn>(fn)(std::move(value()))};
+        return Expected<U> {std::forward<Fn>(func)(std::move(value()))};
     }
 
     /// Chain a fallible operation; the function itself returns an `Expected`.
     template<typename Fn>
-    auto and_then(Fn&& fn) && -> std::invoke_result_t<Fn, T> {
+    auto and_then(Fn&& func) && -> std::invoke_result_t<Fn, T> {
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
-        return std::forward<Fn>(fn)(std::move(value()));
+        return std::forward<Fn>(func)(std::move(value()));
     }
 
     /// Return the contained value, or `fallback` if this holds a failure.
@@ -95,6 +95,23 @@ class [[nodiscard]] Expected {
             return std::move(fallback);
         }
         return std::move(value());
+    }
+
+    /// Wrap the failure with a context message; no-op on success.
+    Expected<T> context(std::string msg) && {
+        if (failed()) {
+            return Unexpected {std::move(failure()).push_context(std::move(msg))};
+        }
+        return std::move(*this);
+    }
+
+    /// Wrap the failure with a lazily-constructed context message; no-op on success.
+    template<typename Fn>
+    Expected<T> with_context(Fn&& func) && {
+        if (failed()) {
+            return Unexpected {std::move(failure()).push_context(std::forward<Fn>(func)())};
+        }
+        return std::move(*this);
     }
 
   private:
@@ -109,12 +126,12 @@ class [[nodiscard]] Expected<void> {
 
     Expected(Unexpected ux) : _failure(std::move(ux.failure)) {}
 
-    [[nodiscard]] bool failed() const noexcept {
-        return _failure.has_value();
-    }
-
     explicit operator bool() const noexcept {
         return !failed();
+    }
+
+    [[nodiscard]] bool failed() const noexcept {
+        return _failure.has_value();
     }
 
     [[nodiscard]] Failure& failure() {
@@ -129,11 +146,28 @@ class [[nodiscard]] Expected<void> {
 
     /// Chain a fallible operation; the function itself returns an `Expected`.
     template<typename Fn>
-    auto and_then(Fn&& fn) && -> std::invoke_result_t<Fn> {
+    auto and_then(Fn&& func) && -> std::invoke_result_t<Fn> {
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
-        return std::forward<Fn>(fn)();
+        return std::forward<Fn>(func)();
+    }
+
+    /// Wrap the failure with a context message; no-op on success.
+    Expected<void> context(std::string msg) && {
+        if (failed()) {
+            return Unexpected {std::move(failure()).push_context(std::move(msg))};
+        }
+        return {};
+    }
+
+    /// Wrap the failure with a lazily-constructed context message; no-op on success.
+    template<typename Fn>
+    Expected<void> with_context(Fn&& func) && {
+        if (failed()) {
+            return Unexpected {std::move(failure()).push_context(std::forward<Fn>(func)())};
+        }
+        return {};
     }
 
   private:

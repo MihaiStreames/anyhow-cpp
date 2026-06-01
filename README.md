@@ -2,6 +2,9 @@
 
 Header-only C++20 result type with propagating stacktraced errors, inspired by Rust's [`anyhow`](https://github.com/dtolnay/anyhow).
 
+[![C++](https://img.shields.io/badge/20-f34b7d?logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/20)
+[![Release](https://img.shields.io/github/v/release/MihaiStreames/anyhow-cpp?label=release)](https://github.com/MihaiStreames/anyhow-cpp/releases)
+[![CI](https://github.com/MihaiStreames/anyhow-cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/MihaiStreames/anyhow-cpp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/MihaiStreames/anyhow-cpp?label=license)](LICENSE)
 
 ```cpp
@@ -129,8 +132,8 @@ Override the frame buffer depth at compile time (default: `16`). When full, olde
 | `ANYHOW_TRY*` propagation macros          | Done                                     |
 | `map` / `and_then` / `value_or`           | Done                                     |
 | `ScopeGuard`                              | Done                                     |
-| `context(msg)` -- wrap with message layer | WIP                                      |
-| `with_context(fn)` -- lazy context        | WIP                                      |
+| `context(msg)` -- wrap with message layer | Done                                     |
+| `with_context(fn)` -- lazy context        | Done                                     |
 | `chain()` -- iterate context layers       | WIP                                      |
 | `root_cause()` -- deepest error           | WIP                                      |
 | `bail!` / `ensure!` macros                | WIP                                      |

@@ -42,7 +42,7 @@
 #ifdef ANYHOW_SHORT_MACROS
 
     #define TRY(expr) ANYHOW_TRY(expr)
-    #define TRY_CATCH(expr, c) ANYHOW_TRY_CATCH(expr, c)
-    #define TRY_ASSIGN(out, expr) ANYHOW_TRY_ASSIGN(out, expr)
+    #define TRY_CATCH(expr, cleanup) ANYHOW_TRY_CATCH(expr, cleanup)
+    #define TRY_ASSIGN(var_out, expr) ANYHOW_TRY_ASSIGN(var_out, expr)
 
 #endif

@@ -1,16 +1,23 @@
 # Changelog
 
-All notable changes to anyhow-cpp.
+All notable changes to this project.
 
 ## [0.1.1] - 2026-06-01
 
 ### Added
 
-- Doc-comments on public types, members, and macros
+- Docstrings on public types, members, and macros
+- `Failure::context` vector for wrapping human-readable messages
+- `Failure::push_context()` mutator for appending context messages
+- `Failure::fmt()` renders context outermost-first followed by the root error; `operator<<` wraps it
+- `Expected<T>::context(msg)` and `Expected<T>::with_context(fn)` for lazy context attachment (both `T` and `void` specializations)
+- GTest suite: 31 tests across `Expected<T/void>`, context, fmt, `ScopeGuard`, and `ANYHOW_TRY*` macros
 
 ### Changed
 
 - Dropped redundant `[[nodiscard]]` from `map`, `and_then`, `fail` (return type already carries it)
+- `Error` renamed to `ErrorInfo`, freeing `Error` for the future type-erased error type (Phase 5)
+- Member ordering standardized across all headers: constants -> fields -> constructors -> mutators -> accessors -> methods
 
 ### Fixed
 

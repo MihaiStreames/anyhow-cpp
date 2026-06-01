@@ -5,7 +5,7 @@
 namespace anyhow {
 
 /// Root error: a human-readable message and an optional domain tag (e.g. "io", "parse").
-struct Error {
+struct ErrorInfo {
     std::string message;
     std::string domain;
 };

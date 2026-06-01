@@ -17,37 +17,52 @@ repos:
       - id: zizmor
         priority: 0
 
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        priority: 0
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.13.1-1
+    hooks:
+      - id: shfmt
+        types: [shell]
+        priority: 0
+
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.8.3
     hooks:
       - id: prettier
         types_or: [json, yaml]
-        priority: 2
+        priority: 0
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
       - id: cmake-format
-        priority: 1
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      - id: check-added-large-files
-        priority: 2
+        priority: 0
 
   - repo: local
     hooks:
       - id: clang-format
-        name: clang-format
-        entry: clang-format --dry-run --Werror
+        name: format
+        entry: clang-format -i
         language: system
         types_or: [c, c++]
-        priority: 1
+        priority: 0
 
       - id: clang-tidy
-        name: clang-tidy
+        name: lint
         entry: clang-tidy --use-color -p build
         language: system
         files: \.cpp$
-        priority: 0
+        priority: 1
+
+      - id: ctest
+        name: test
+        entry: bash -c 'cmake --build build --target anyhow-tests && ctest --test-dir build --output-on-failure'
+        language: system
+        pass_filenames: false
+        always_run: true
+        priority: 2

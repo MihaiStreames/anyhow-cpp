@@ -42,18 +42,20 @@ target_link_libraries(your-target PRIVATE anyhow::anyhow)
 
 Include everything at once with `anyhow.hpp`, or pull in individual headers as needed.
 
-| Header            | Provides                                              |
-| ----------------- | ----------------------------------------------------- |
-| `anyhow.hpp`      | Includes all headers below                            |
-| `expected.hpp`    | `Expected<T>`, `Expected<void>`                       |
-| `failure.hpp`     | `Failure`, `Unexpected`, `fail()`                     |
-| `macros.hpp`      | `ANYHOW_TRY`, `ANYHOW_TRY_ASSIGN`, `ANYHOW_TRY_CATCH` |
-| `scope_guard.hpp` | `ScopeGuard`                                          |
+| Header            | Provides                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| `anyhow.hpp`      | Includes all headers below + `Result<T>` alias                                        |
+| `expected.hpp`    | `Expected<T>`, `Expected<void>`                                                       |
+| `failure.hpp`     | `Failure`, `Unexpected`, `fail()`, `fail_with()`, `chain()`, `root_cause()`           |
+| `macros.hpp`      | `ANYHOW_TRY`, `ANYHOW_TRY_ASSIGN`, `ANYHOW_TRY_CATCH`, `ANYHOW_BAIL`, `ANYHOW_ENSURE` |
+| `scope_guard.hpp` | `ScopeGuard`                                                                          |
 
 > [!NOTE]
-> Define `ANYHOW_SHORT_MACROS` before including `macros.hpp` to enable the short aliases `TRY`, `TRY_ASSIGN`, `TRY_CATCH`.
+> Define `ANYHOW_SHORT_MACROS` before including `macros.hpp` to enable the short aliases `TRY`, `TRY_ASSIGN`, `TRY_CATCH`, `BAIL`, `ENSURE`.
 
-Use `Expected<T>` as the return type of any fallible function. Return `anyhow::fail(message, domain)` on failure, or return the value directly on success.
+`anyhow::Result<T>` is an alias for `Expected<T>`, matching Rust's naming convention.
+
+Use `Expected<T>` (or `Result<T>`) as the return type of any fallible function. Return `anyhow::fail(message, domain)` on failure, or return the value directly on success.
 
 ```cpp
 anyhow::Expected<int> parse(std::string_view s) {
@@ -62,6 +64,23 @@ anyhow::Expected<int> parse(std::string_view s) {
     }
 
     return 42;
+}
+```
+
+### Early return
+
+`ANYHOW_BAIL` returns a failure immediately. `ANYHOW_ENSURE` does the same when a condition is false.
+
+```cpp
+anyhow::Expected<int> parse(std::string_view s) {
+    ANYHOW_ENSURE(!s.empty(), "empty input", "parse");
+    // ...
+    return 42;
+}
+
+anyhow::Expected<void> validate(int n) {
+    if (n < 0) ANYHOW_BAIL("negative value");
+    return {};
 }
 ```
 
@@ -81,13 +100,13 @@ anyhow::Expected<std::string> process(std::string_view s) {
 ```
 
 ```cpp
-auto r = process("");
-if (r.failed()) {
-    auto& f = r.failure();
-    std::cout << "error [" << f.error.domain << "]: " << f.error.message << '\n';
+auto result = process("");
+if (result.failed()) {
+    auto& fail = result.failure();
+    std::cout << "error [" << fail.error.domain << "]: " << fail.error.message << '\n';
 
-    for (size_t i = 0; i < f.count; i++) {
-        std::cout << "  at " << f.frames[i].function << " (" << f.frames[i].file << ':' << f.frames[i].line << ")\n";
+    for (size_t i = 0; i < fail.count; i++) {
+        std::cout << "  at " << fail.frames[i].function << " (" << fail.frames[i].file << ':' << fail.frames[i].line << ")\n";
     }
 }
 ```
@@ -118,6 +137,36 @@ failed to parse config
 unexpected token at line 42 [parse]
 ```
 
+### Downcasting
+
+Attach a typed payload with `fail_with()` and recover it with `Failure::downcast<T>()`, which returns a pointer or null.
+
+```cpp
+anyhow::Expected<void> open(std::string_view path) {
+    return anyhow::fail_with(errno, "open failed", "io");
+}
+
+auto result = open("/missing");
+if (result.failed()) {
+    if (auto* code = result.failure().downcast<int>()) {
+        std::cout << "errno: " << *code << '\n';
+    }
+}
+```
+
+### Inspection
+
+`chain()` iterates context layers outermost-first then the root error message. `root_cause()` returns the root `ErrorInfo` directly.
+
+```cpp
+for (auto cause : failure.chain()) {
+    std::cerr << cause << '\n';
+}
+
+const auto& root = failure.root_cause();
+std::cerr << root.message << " [" << root.domain << "]\n";
+```
+
 ### Chaining
 
 `map`, `and_then`, and `value_or` are available for functional chaining on results.
@@ -130,13 +179,17 @@ auto result = parse("21")
     });
 ```
 
+### Scope guard
+
 `ScopeGuard` runs a callable on scope exit. Call `release()` to cancel.
 
 ```cpp
 auto guard = anyhow::ScopeGuard{[&] { cleanup(); }};
 ```
 
-Override the frame buffer depth at compile time (default: `16`). When full, oldest frames are evicted. Must be defined before any anyhow include.
+### Frame buffer depth
+
+Override at compile time (default: `16`). When full, oldest frames are evicted. Must be defined before any anyhow include.
 
 ```cpp
 #define ANYHOW_MAX_FRAMES 32

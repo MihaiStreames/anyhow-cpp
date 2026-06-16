@@ -33,6 +33,26 @@ static anyhow::Expected<int> try_catch_ok(bool& cleaned) {
     return {0};
 }
 
+static anyhow::Expected<int> bail_always() {
+    ANYHOW_BAIL("bail triggered");
+    return {0};
+}
+
+static anyhow::Expected<int> bail_with_domain() {
+    ANYHOW_BAIL("oops", "io");
+    return {0};
+}
+
+static anyhow::Expected<int> ensure_passes(int val) {
+    ANYHOW_ENSURE(val > 0, "must be positive");
+    return {val};
+}
+
+static anyhow::Expected<int> ensure_fails(int val) {
+    ANYHOW_ENSURE(val > 0, "must be positive", "validation");
+    return {val};
+}
+
 TEST(Macros, TryPropagatesFailure) {
     auto res = try_propagate();
 
@@ -56,7 +76,7 @@ TEST(Macros, TryAssignPropagatesFailure) {
 
 TEST(Macros, TryCatchRunsCleanupOnFailure) {
     bool cleaned = false;
-    auto res = try_catch_fail(cleaned);
+    auto res     = try_catch_fail(cleaned);
 
     ASSERT_TRUE(res.failed());
     EXPECT_TRUE(cleaned);
@@ -64,8 +84,33 @@ TEST(Macros, TryCatchRunsCleanupOnFailure) {
 
 TEST(Macros, TryCatchSkipsCleanupOnSuccess) {
     bool cleaned = false;
-    auto res = try_catch_ok(cleaned);
+    auto res     = try_catch_ok(cleaned);
 
     EXPECT_FALSE(res.failed());
     EXPECT_FALSE(cleaned);
+}
+
+TEST(Macros, BailReturnsFailure) {
+    auto res = bail_always();
+    ASSERT_TRUE(res.failed());
+    EXPECT_EQ(res.failure().error.message, "bail triggered");
+}
+
+TEST(Macros, BailForwardsDomain) {
+    auto res = bail_with_domain();
+    ASSERT_TRUE(res.failed());
+    EXPECT_EQ(res.failure().error.domain, "io");
+}
+
+TEST(Macros, EnsurePassesWhenCondTrue) {
+    auto res = ensure_passes(1);
+    ASSERT_FALSE(res.failed());
+    EXPECT_EQ(res.value(), 1);
+}
+
+TEST(Macros, EnsureFailsWhenCondFalse) {
+    auto res = ensure_fails(-1);
+    ASSERT_TRUE(res.failed());
+    EXPECT_EQ(res.failure().error.message, "must be positive");
+    EXPECT_EQ(res.failure().error.domain, "validation");
 }

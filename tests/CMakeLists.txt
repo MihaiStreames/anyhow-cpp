@@ -13,23 +13,22 @@ set(BUILD_GMOCK
     CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# Unit tests
+# Unit tests ###
 
 set(ANYHOW_TEST_SOURCES test_expected.cpp test_context.cpp test_fmt.cpp
-                        test_scope_guard.cpp test_macros.cpp)
+                        test_scope_guard.cpp test_macros.cpp test_failure.cpp)
 
 add_executable(anyhow-tests ${ANYHOW_TEST_SOURCES})
 
 target_link_libraries(anyhow-tests PRIVATE anyhow::anyhow GTest::gtest_main)
 target_compile_features(anyhow-tests PRIVATE cxx_std_20)
-target_compile_options(anyhow-tests PRIVATE -std=c++20)
 target_compile_definitions(anyhow-tests PRIVATE ANYHOW_SHORT_MACROS)
 target_include_directories(anyhow-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(GoogleTest)
 gtest_discover_tests(anyhow-tests)
 
-# Fuzz target (clang libFuzzer only)
+# Fuzz target (clang libFuzzer only) ###
 
 option(ANYHOW_BUILD_FUZZ
        "Build libFuzzer fuzz targets (requires clang + -fsanitize=fuzzer)" OFF)

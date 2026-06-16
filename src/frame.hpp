@@ -9,7 +9,7 @@ namespace anyhow {
 struct Frame {
     const char* function;
     const char* file;
-    uint32_t line;
+    uint32_t    line;
 
     /// Capture the caller's location. Defaulted argument resolves at the call site.
     static Frame

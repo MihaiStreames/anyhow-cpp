@@ -14,9 +14,9 @@ struct ScopeGuard {
         other._active = false;
     }
 
-    ScopeGuard(const ScopeGuard&) = delete;
+    ScopeGuard(const ScopeGuard&)            = delete;
     ScopeGuard& operator=(const ScopeGuard&) = delete;
-    ScopeGuard& operator=(ScopeGuard&&) = delete;
+    ScopeGuard& operator=(ScopeGuard&&)      = delete;
 
     ~ScopeGuard() noexcept {
         if (_active) {
@@ -31,7 +31,7 @@ struct ScopeGuard {
 
   private:
     std::decay_t<Fn> _fn;
-    bool _active = true;
+    bool             _active = true;
 };
 
 template<typename Fn>

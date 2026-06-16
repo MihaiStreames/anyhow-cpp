@@ -3,7 +3,7 @@
 #include "anyhow.hpp"
 
 inline anyhow::Expected<int> ok_int(int val) {
-    return anyhow::Expected<int>(val);
+    return {val};
 }
 
 inline anyhow::Expected<int> err_int(std::string msg, std::string domain = {}) {

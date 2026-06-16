@@ -156,12 +156,10 @@ inline Unexpected fail_with(
     const std::string&         domain = {},
     const std::source_location loc    = std::source_location::current()
 ) {
+    // TODO: message/domain are copied from const&
+    // revisit if string_view or forwarding becomes viable
     return Unexpected {Failure {
-        ErrorInfo {
-            .message = std::move(message),
-            .domain  = std::move(domain),
-            .payload = std::move(payload)
-        },
+        ErrorInfo {.message = message, .domain = domain, .payload = std::move(payload)},
         Frame::current(loc)
     }};
 }

@@ -84,7 +84,7 @@ TEST(ExpectedVoid, FailureHoldsError) {
 
 TEST(ExpectedVoid, AndThenSuccess) {
     bool called = false;
-    auto res = std::move(ok_void()).and_then([&]() -> anyhow::Expected<void> {
+    auto res    = std::move(ok_void()).and_then([&]() -> anyhow::Expected<void> {
         called = true;
         return {};
     });
@@ -95,11 +95,25 @@ TEST(ExpectedVoid, AndThenSuccess) {
 
 TEST(ExpectedVoid, AndThenFailurePassthrough) {
     bool called = false;
-    auto res = std::move(err_void("bad")).and_then([&]() -> anyhow::Expected<void> {
+    auto res    = std::move(err_void("bad")).and_then([&]() -> anyhow::Expected<void> {
         called = true;
         return {};
     });
 
     EXPECT_TRUE(res.failed());
     EXPECT_FALSE(called);
+}
+
+TEST(ResultAlias, OkWorks) {
+    anyhow::Result<int> res = ok_int(42);
+
+    ASSERT_FALSE(res.failed());
+    EXPECT_EQ(res.value(), 42);
+}
+
+TEST(ResultAlias, FailWorks) {
+    anyhow::Result<int> res = anyhow::fail("nope");
+
+    ASSERT_TRUE(res.failed());
+    EXPECT_EQ(res.failure().error.message, "nope");
 }

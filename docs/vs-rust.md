@@ -6,8 +6,11 @@ A feature-by-feature comparison between [`anyhow`](https://github.com/dtolnay/an
 
 - [Result type](#result-type)
 - [Error construction](#error-construction)
+- [Early return](#early-return)
 - [Propagation](#propagation)
 - [Context](#context)
+- [Downcasting](#downcasting)
+- [Inspection](#inspection)
 - [Backtraces](#backtraces)
 
 ## Result type
@@ -26,8 +29,13 @@ anyhow::Expected<Config> load(std::string_view path) {
 }
 ```
 
-> [!NOTE]
-> A `Result<T>` alias matching Rust's naming is planned but not yet shipped.
+`anyhow::Result<T>` is available as an alias for `Expected<T>`:
+
+```cpp
+anyhow::Result<Config> load(std::string_view path) {
+    // ...
+}
+```
 
 ## Error construction
 
@@ -39,6 +47,26 @@ return Err(anyhow!("empty input"));
 
 ```cpp
 return anyhow::fail("empty input", "parse");
+```
+
+## Early return
+
+Rust's `bail!` and `ensure!` macros construct an error and return early in one step. C++ mirrors them with `ANYHOW_BAIL` and `ANYHOW_ENSURE`.
+
+```rust
+bail!("negative value");
+ensure!(!s.is_empty(), "empty input");
+```
+
+```cpp
+ANYHOW_BAIL("negative value");
+ANYHOW_ENSURE(!s.empty(), "empty input");
+```
+
+Both accept an optional domain tag as a second argument in C++ (no direct Rust equivalent since Rust uses typed errors for that):
+
+```cpp
+ANYHOW_ENSURE(!s.empty(), "empty input", "parse");
 ```
 
 ## Propagation
@@ -57,7 +85,7 @@ ANYHOW_TRY(validate(n));
 ```
 
 > [!NOTE]
-> `ANYHOW_TRY_CATCH(expr, cleanup)` has no Rust analogue -- it runs a cleanup expression before returning on failure. Define `ANYHOW_SHORT_MACROS` for the unprefixed `TRY` / `TRY_ASSIGN` / `TRY_CATCH` aliases.
+> `ANYHOW_TRY_CATCH(expr, cleanup)` has no Rust analogue -- it runs a cleanup expression before returning on failure. Define `ANYHOW_SHORT_MACROS` before including `macros.hpp` to enable unprefixed aliases for all macros: `TRY`, `TRY_ASSIGN`, `TRY_CATCH`, `BAIL`, `ENSURE`.
 
 ## Context
 
@@ -76,6 +104,48 @@ parse_file(path)
 ```
 
 Both render context outermost-first, then the root error.
+
+## Downcasting
+
+Rust erases the concrete error type behind `anyhow::Error` but lets you recover it with `downcast_ref::<E>()` / `is::<E>()`.
+
+```rust
+if let Some(io_err) = err.downcast_ref::<std::io::Error>() {
+    // ...
+}
+```
+
+C++ has no `std::error::Error` trait, so the approach differs: attach a typed payload via `fail_with()` and recover it with `Failure::downcast<T>()`, which returns a pointer or null.
+
+```cpp
+return anyhow::fail_with(IoError {errno}, "read failed", "io");
+
+if (auto* io = failure.downcast<IoError>()) {
+    // ...
+}
+```
+
+The `domain` string tag remains available for cheaper string-based discrimination when a typed payload is not needed.
+
+## Inspection
+
+Rust walks the error's source chain via `Error::chain()` and reaches the deepest cause with `root_cause()`.
+
+```rust
+for cause in err.chain() {
+    eprintln!("{cause}");
+}
+let root = err.root_cause();
+```
+
+C++ mirrors both on `Failure`. `chain()` returns context layers outermost-first followed by the root error message. `root_cause()` returns the root `ErrorInfo` directly.
+
+```cpp
+for (auto cause : failure.chain()) {
+    std::cerr << cause << '\n';
+}
+const auto& root = failure.root_cause();
+```
 
 ## Backtraces
 

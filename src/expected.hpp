@@ -74,9 +74,11 @@ class [[nodiscard]] Expected {
     template<typename Fn>
     auto map(Fn&& func) && -> Expected<std::invoke_result_t<Fn, T>> {
         using U = std::invoke_result_t<Fn, T>;
+
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
+
         return Expected<U> {std::forward<Fn>(func)(std::move(value()))};
     }
 
@@ -86,6 +88,7 @@ class [[nodiscard]] Expected {
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
+
         return std::forward<Fn>(func)(std::move(value()));
     }
 
@@ -94,6 +97,7 @@ class [[nodiscard]] Expected {
         if (failed()) {
             return std::move(fallback);
         }
+
         return std::move(value());
     }
 
@@ -102,6 +106,7 @@ class [[nodiscard]] Expected {
         if (failed()) {
             return Unexpected {std::move(failure()).push_context(std::move(msg))};
         }
+
         return std::move(*this);
     }
 
@@ -111,6 +116,7 @@ class [[nodiscard]] Expected {
         if (failed()) {
             return Unexpected {std::move(failure()).push_context(std::forward<Fn>(func)())};
         }
+
         return std::move(*this);
     }
 
@@ -150,6 +156,7 @@ class [[nodiscard]] Expected<void> {
         if (failed()) {
             return Unexpected {std::move(failure())};
         }
+
         return std::forward<Fn>(func)();
     }
 
@@ -158,6 +165,7 @@ class [[nodiscard]] Expected<void> {
         if (failed()) {
             return Unexpected {std::move(failure()).push_context(std::move(msg))};
         }
+
         return {};
     }
 
@@ -167,6 +175,7 @@ class [[nodiscard]] Expected<void> {
         if (failed()) {
             return Unexpected {std::move(failure()).push_context(std::forward<Fn>(func)())};
         }
+
         return {};
     }
 

@@ -23,6 +23,12 @@ add_executable(anyhow-tests ${ANYHOW_TEST_SOURCES})
 target_link_libraries(anyhow-tests PRIVATE anyhow::anyhow GTest::gtest_main)
 target_compile_features(anyhow-tests PRIVATE cxx_std_20)
 target_compile_definitions(anyhow-tests PRIVATE ANYHOW_SHORT_MACROS)
+
+# __VA_OPT__ is C++20 but MSVC requires an explicit conformance flag to enable
+# it
+if(MSVC)
+  target_compile_options(anyhow-tests PRIVATE /Zc:preprocessor)
+endif()
 target_include_directories(anyhow-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(GoogleTest)

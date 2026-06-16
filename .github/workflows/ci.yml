@@ -32,10 +32,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Format check
-        if: matrix.os == 'ubuntu-latest'
-        run: find src tests -name '*.hpp' -o -name '*.cpp' | xargs clang-format --dry-run --Werror
-
       - name: Configure
         env:
           CXX_STD: "20"

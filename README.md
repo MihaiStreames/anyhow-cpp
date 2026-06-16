@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
   anyhow-cpp
   GIT_REPOSITORY https://github.com/MihaiStreames/anyhow-cpp.git
-  GIT_TAG        v0.1.1
+  GIT_TAG        v0.1.0
 )
 FetchContent_MakeAvailable(anyhow-cpp)
 

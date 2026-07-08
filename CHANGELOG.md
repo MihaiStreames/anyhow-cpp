@@ -2,6 +2,12 @@
 
 All notable changes to this project.
 
+## [0.2.0] - 2026-07-08
+
+### Added
+
+- `ANYHOW_ENSURE` stringification (embedding failing condition as a string in the error message)
+
 ## [0.1.0] - 2026-06-16
 
 ### Added

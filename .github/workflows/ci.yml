@@ -8,6 +8,7 @@ on:
       - "**.cpp"
       - "**/CMakeLists.txt"
       - "cmake/**"
+      - ".github/workflows/ci.yml"
 
 permissions: {}
 
@@ -16,34 +17,59 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Check (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+  sanitize:
+    name: Sanitize
+    runs-on: ubuntu-latest
     permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+      contents: read # checkout
 
     steps:
       - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Configure
+        run: cmake --preset asan
+
+      - name: Build
+        run: cmake --build --preset asan
+
+      - name: Test
+        run: ctest --preset asan
+
+  check:
+    name: Check (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read # checkout
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, cxx: g++, name: linux-gcc }
+          - { os: ubuntu-latest, cxx: clang++, name: linux-clang }
+          - { os: macos-latest, name: apple-clang }
+          - { os: windows-latest, name: windows-msvc }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
       - name: Configure
         env:
-          CXX_STD: "20"
+          CXX_COMPILER: ${{ matrix.cxx }}
         shell: bash
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DANYHOW_BUILD_TESTS=ON "-DCMAKE_CXX_STANDARD=$CXX_STD"
+        run: cmake --preset ci "${CXX_COMPILER:+-DCMAKE_CXX_COMPILER=$CXX_COMPILER}"
 
       - name: Lint
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.cxx == 'clang++'
         run: find tests -name '*.cpp' | xargs clang-tidy -p build
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build --preset ci
 
       - name: Test
-        run: ctest --test-dir build --build-config Release --output-on-failure
+        run: ctest --preset ci

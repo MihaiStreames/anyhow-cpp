@@ -53,6 +53,11 @@ static anyhow::Expected<int> ensure_fails(int val) {
     return {val};
 }
 
+static anyhow::Expected<int> ensure_no_msg(int val) {
+    ANYHOW_ENSURE(val > 0);
+    return {val};
+}
+
 TEST(Macros, TryPropagatesFailure) {
     auto res = try_propagate();
 
@@ -113,4 +118,11 @@ TEST(Macros, EnsureFailsWhenCondFalse) {
     ASSERT_TRUE(res.failed());
     EXPECT_EQ(res.failure().error.message, "must be positive");
     EXPECT_EQ(res.failure().error.domain, "validation");
+}
+
+TEST(Macros, EnsureAutoMessage) {
+    auto res = ensure_no_msg(-1);
+    ASSERT_TRUE(res.failed());
+    EXPECT_EQ(res.failure().error.message, "Condition failed: val > 0");
+    EXPECT_EQ(res.failure().error.domain, "");
 }

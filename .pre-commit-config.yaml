@@ -12,33 +12,33 @@ repos:
         priority: 0
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.2
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7  # frozen: v1.32.0
     hooks:
       - id: zizmor
         priority: 0
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
         priority: 0
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.13.1-1
+    rev: 479be5958357ba5ab65ce47172117348516860e9  # frozen: v3.14.1-1
     hooks:
       - id: shfmt
         types: [shell]
         priority: 0
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.3
+    rev: 331f33fa4dfbcbca7c3da3620c137fde0faab273  # frozen: v3.9.10
     hooks:
       - id: prettier
         types_or: [json, yaml]
         priority: 0
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: v0.6.13
+    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319  # frozen: v0.6.13
     hooks:
       - id: cmake-format
         priority: 0
